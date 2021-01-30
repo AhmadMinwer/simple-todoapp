@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App</title>
+
+    <style>
+        .hidden{
+            display: none;
+        }
+        .hidden h3 {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <ul id="todos">
+            {% for item in data%}
+            <li>{{ item.description }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div id="error" class="hidden">
+        <h3>error: the new task did not added to database!</h3>
+    </div>
+
+    <div class="add-task-form">
+        <form id="form">
+            <label for="description"> please enter your todo:</label>
+            <input type="text" id="description" name="description">
+            <input type="submit" value="Create">
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('form').onsubmit = (e) => {
+            e.preventDefault();
+            fetch('/todos/create', {
+                method: 'POST',
+                body: JSON.stringify({
+                    'description' : document.getElementById('description').value
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then((response)=>{
+                return response.json();
+            })
+            .then((jsonResponse)=>{
+                console.log(jsonResponse)
+                const newItem = document.createElement('LI');
+                newItem.innerHTML = jsonResponse['description'];
+                document.getElementById('todos').appendChild(newItem);
+                document.getElementById('error').className = 'hidden';
+                document.getElementById('description').value = ''
+            })
+            .catch(()=>{
+                document.getElementById('error').className = '';
+            })
+        }
+    </script>
+</body>
+</html>
