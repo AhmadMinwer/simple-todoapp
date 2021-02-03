@@ -12,17 +12,24 @@
         .hidden h3 {
             color: red;
         }
+    
+        ul {
+            list-style: none;
+            margin: 20px 0 0 0;
+            padding: 0;
+        }
+
+        .delete-todo{
+            color: red;
+            font-family:fantasy;
+            cursor: pointer;
+            border: none;
+            background: rgba(0, 0, 0, 0) /* override to be same as body*/
+        }
+
     </style>
 </head>
 <body>
-    <div>
-        <ul id="todos">
-            {% for item in data%}
-            <li>{{ item.description }}</li>
-            {% endfor %}
-        </ul>
-    </div>
-
     <div id="error" class="hidden">
         <h3>error: the new task did not added to database!</h3>
     </div>
@@ -34,8 +41,55 @@
             <input type="submit" value="Create">
         </form>
     </div>
+    
+    <div>
+        <ul id="todos">
+            {% for item in data%}
+            <li> 
+                <input class="check-completed" data-id="{{ item.id }}" type="checkbox"  {% if item.completed %} checked {% endif %}> 
+                {{ item.description }} 
+                <!-- <span >X</span> -->
+                <input data-id="{{ item.id }}" class="delete-todo" type="button" value="X" >
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
 
     <script>
+        // set event listener for delete todo
+        const deleteButtons = document.querySelectorAll('.delete-todo');
+        for( let i=0; i<deleteButtons.length; i++){
+            const button = deleteButtons[i];
+            button.onclick = function(e){
+                console.log('event', e)
+                const todoId = e.target.dataset['id']
+                fetch('/todos/'+ todoId, {
+                    method: 'DELETE'
+                });
+            }
+        }
+
+        // set event listener for completed todo
+        const checkboxes = document.querySelectorAll('.check-completed');
+        for(let i=0; i<checkboxes.length; i++){
+            const checkbox = checkboxes[i];
+            checkbox.onchange = function(e){
+                console.log('event', e)
+                const newCompleted = e.target.checked;
+                const todoId = e.target.dataset['id'];
+                fetch('/todos/'+ todoId +'/set-completed',{
+                    method: 'POST',
+                    body: JSON.stringify({
+                        'completed': newCompleted
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+            }
+        }
+
+        // add new todo event listener
         document.getElementById('form').onsubmit = (e) => {
             e.preventDefault();
             fetch('/todos/create', {
@@ -53,7 +107,7 @@
             .then((jsonResponse)=>{
                 console.log(jsonResponse)
                 const newItem = document.createElement('LI');
-                newItem.innerHTML = jsonResponse['description'];
+                newItem.innerHTML = jsonResponse['description']; 
                 document.getElementById('todos').appendChild(newItem);
                 document.getElementById('error').className = 'hidden';
                 document.getElementById('description').value = ''
